@@ -6,7 +6,7 @@
 	>
 		<div class="flex flex-col">
 			<div class="flex justify-center text-left">
-				<div v-if="pullRequests" class="flex flex-col gap-4">
+				<div v-if="pullRequests" class="flex flex-col gap-2">
 					<div
 						v-for="pr in pullRequests"
 						:key="pr.id"
