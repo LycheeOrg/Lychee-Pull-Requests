@@ -6,44 +6,74 @@
 	>
 		<div class="flex flex-col">
 			<div class="flex justify-center text-left">
-				<div v-if="data" class="flex flex-col gap-4">
+				<div v-if="pullRequests" class="flex flex-col gap-4">
 					<div
-						v-for="pr in data"
+						v-for="pr in pullRequests"
 						:key="pr.id"
 						:class="{
-							'flex flex-wrap gap-y-0.5': true,
+							'flex justify-between gap-16': true,
 							'transition-opacity duration-100 ease-in-out opacity-50 hover:opacity-100':
 								pr.draft,
 						}"
 					>
-						<div class="flex items-center gap-2 grow-1">
-							<a
-								:href="pr.html_url"
-								target="_blank"
-								:class="{
-									'font-bold hover:text-sky-400': true,
-									'text-muted-color': pr.draft,
-								}"
-							>
-								{{ pr.title }}
-							</a>
-							<Tag
-								v-for="label in pr.labels"
-								:value="label.name"
-								:key="`${label.id}`"
-								v-tooltip="label.description"
-								:pt:label:class="'text-2xs'"
-								:dt="{
-									padding: '0.15rem 0.5rem',
-								}"
-								:style="{
-									backgroundColor: `#${label.color}`,
-									color: getFrontColor(`#${label.color}`),
-								}"
-							></Tag>
+						<div class="flex flex-col">
+							<div class="flex items-center gap-2 grow-1">
+								<a
+									:href="pr.html_url"
+									target="_blank"
+									:class="{
+										'font-bold hover:text-sky-400': true,
+										'text-muted-color': pr.draft,
+									}"
+								>
+									{{ pr.title }}
+								</a>
+								<Tag
+									v-for="label in pr.labels"
+									:value="label.name"
+									:key="`${label.id}`"
+									v-tooltip="label.description"
+									:pt:label:class="'text-2xs'"
+									:dt="{
+										padding: '0.15rem 0.5rem',
+									}"
+									:style="{
+										backgroundColor: `#${label.color}`,
+										color: getFrontColor(`#${label.color}`),
+									}"
+								></Tag>
+							</div>
+
+							<div class="text-muted-color text-xs w-full">
+								<span class="text-muted-color-emphasis">#{{ pr.number }}</span>
+								opened by <UserTag :user="pr.user" />
+								<span v-if="pr.base.ref !== 'master'" class="ml-2">
+									&rArr;
+									<span class="ml-2 text-primary-emphasis">{{
+										pr.base.ref
+									}}</span>
+								</span>
+							</div>
 						</div>
 						<div
-							v-if="!pr.draft"
+							v-if="pr.review && pr.review.changes_requested"
+							class="text-red-400 font-bold"
+						>
+							Changes requested.
+						</div>
+						<div v-else-if="pr.review && pr.review.approved" class="flex flex-col">
+							<div class="text-green-500 text-right">Approved</div>
+							<div class="text-xs">
+								by
+								<UserTag
+									v-for="(user, idx) in pr.review.by"
+									:user="user"
+									:key="`u${pr.id}-${idx}`"
+								/>
+							</div>
+						</div>
+						<div
+							v-else-if="!pr.draft"
 							:class="{
 								'shrink-1': true,
 								'text-orange-400': !pr.draft && isMoreThanXdays(pr.created_at, 7),
@@ -58,21 +88,9 @@
 							<span v-else-if="isMoreThanXdays(pr.created_at, 2)">🙂</span>
 							<span v-else>😄</span> -->
 						</div>
-						<div v-if="pr.draft" class="text-muted-color">
+						<div v-else-if="pr.draft" class="text-muted-color">
 							{{ computeHowLongAgo(pr.created_at) }}
 							<!-- <span>🫣</span> -->
-						</div>
-						<div class="text-muted-color text-xs w-full">
-							<span class="text-muted-color-emphasis">#{{ pr.number }}</span> opened
-							by
-							<a :href="pr.user.html_url" class="text-muted-color-emphasis"
-								><img :src="pr.user.avatar_url" class="rounded-full h-4 inline" />
-								{{ pr.user.login }}</a
-							>
-							<span v-if="pr.base.ref !== 'master'" class="ml-2">
-								&rArr;
-								<span class="ml-2 text-primary-emphasis">{{ pr.base.ref }}</span>
-							</span>
 						</div>
 					</div>
 				</div>
@@ -90,63 +108,18 @@ import { ref } from 'vue';
 import { onMounted } from 'vue';
 import Tag from 'primevue/tag';
 import { Panel } from 'primevue';
+import {
+	type PullRequest,
+	type PullRequestReview,
+	type ReviewStatus,
+	type User,
+	APPROVED,
+	CHANGES_REQUESTED,
+	CONTRIBUTOR,
+} from './ResponsesTypes.ts';
+import UserTag from './components/UserTag.vue';
 
-type PullRequest = {
-	active_lock_reason: unknown;
-	assignee: unknown;
-	assignees: string[];
-	author_association: string;
-	auto_merge: null;
-	body: string;
-	closed_at: null;
-	comments_url: string;
-	commits_url: string;
-	created_at: string;
-	diff_url: string;
-	draft: boolean;
-	html_url: string;
-	id: number;
-	issue_url: string;
-	labels: { color: string; id: number; description: string; name: string }[];
-	locked: boolean;
-	merge_commit_sha: string;
-	merged_at: null;
-	milestone: null;
-	node_id: string;
-	number: number;
-	patch_url: string;
-	requested_reviewers: [];
-	review_comment_url: string;
-	review_comments_url: string;
-	state: 'open';
-	statuses_url: string;
-	title: string;
-	updated_at: string;
-	url: string;
-	user: {
-		login: string;
-		id: number;
-		node_id: string;
-		avatar_url: string;
-		gravatar_id: string;
-		url: string;
-		html_url: string;
-		followers_url: string;
-		following_url: string;
-		gists_url: string;
-		starred_url: string;
-		subscriptions_url: string;
-		organizations_url: string;
-		repos_url: string;
-		events_url: string;
-		received_events_url: string;
-		type: string;
-		site_admin: boolean;
-	};
-	base: { ref: string };
-};
-
-const data = ref<PullRequest[] | undefined>(undefined);
+const pullRequests = ref<(PullRequest & ReviewStatus)[] | undefined>(undefined);
 const octokit = new Octokit();
 
 function colorIsDarkSimple(bgColor: string): boolean {
@@ -188,24 +161,89 @@ function isMoreThanXdays(dateString: string, x: number): boolean {
 	return days > x;
 }
 
-async function getPrs() {
-	octokit.rest.pulls
+async function getPrs(): Promise<void> {
+	return octokit.rest.pulls
 		.list({
 			owner: 'LycheeOrg',
 			repo: 'Lychee',
 		})
 		.then((response) => {
-			data.value = response.data as unknown as PullRequest[];
-			console.log('Pull requests fetched successfully:', data.value);
+			pullRequests.value = response.data as unknown as PullRequest[];
 		})
 		.catch((error) => {
 			console.error('Error fetching pull requests:', error);
 		});
-	// const response = await fetch('https://api.github.com/repos/LycheeOrg/Lychee/pulls');
-	// data.value = await response.json();
 }
 
-onMounted(() => {
-	getPrs();
+async function getStatuses() {
+	if (!pullRequests.value || pullRequests.value.length === 0) {
+		console.warn('No pull requests available to fetch statuses for.');
+		return;
+	}
+
+	pullRequests.value.forEach(async (pr, idx) => {
+		await octokit.rest.pulls
+			.listReviews({
+				owner: 'LycheeOrg',
+				repo: 'Lychee',
+				pull_number: pr.number, // Use the pull request number from the fetched PRs
+			})
+			.then((response) => {
+				console.log(
+					`Pull request reviews for PR #${pr.number} fetched successfully:`,
+					response.data,
+				);
+				if (!pullRequests.value) {
+					console.warn('pullRequests.value is undefined, cannot update review status.');
+					return;
+				}
+
+				pullRequests.value[idx].review = extractStatusForPr(
+					response.data as PullRequestReview[],
+				).review;
+			})
+			.catch((error) => {
+				console.error(`Error fetching pull request reviews for PR #${pr.number}:`, error);
+			});
+	});
+}
+
+function extractStatusForPr(reviews: PullRequestReview[]): ReviewStatus {
+	// Loop through the reviews.
+	// Ignore all the reviews that are not from the contributors.
+	const statuses = reviews.reduce(
+		(acc, review) => {
+			if (
+				(review.state === APPROVED || review.state === CHANGES_REQUESTED) &&
+				review.author_association === CONTRIBUTOR
+			) {
+				acc[review.user.login] = { status: review.state, user: review.user };
+			}
+			return acc;
+		},
+		{} as Record<string, { status: string; user: User }>,
+	);
+
+	const result: ReviewStatus = {
+		review: {
+			approved: false,
+			changes_requested: false,
+			by: [],
+		},
+	};
+	Object.entries(statuses).forEach(([_no, review]) => {
+		if (review.status === APPROVED) {
+			result.review!.approved = true;
+		} else if (status === CHANGES_REQUESTED) {
+			result.review!.changes_requested = true;
+		}
+		result.review!.by.push(review.user);
+	});
+	return result;
+}
+
+onMounted(async () => {
+	await getPrs();
+	getStatuses();
 });
 </script>
