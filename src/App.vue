@@ -15,7 +15,7 @@
 							:class="{
 								'opacity-50 group-hover:opacity-100 transition-opacity duration-100 ease-in-out':
 									allDrafts(group.data),
-								'mb-4 text-xl font-bold text-primary-emphasis border-b border-dashed border-surface-400': true,
+								'mb-4 text-xl capitalize font-bold text-primary-emphasis border-b border-dashed border-surface-400': true,
 							}"
 						>
 							{{ group.header }}
