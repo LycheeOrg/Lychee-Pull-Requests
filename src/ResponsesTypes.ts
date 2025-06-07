@@ -38,6 +38,7 @@ export type PullRequest = {
 	url: string;
 	user: User;
 	base: { ref: string };
+	head: { ref: string };
 };
 
 export const CONTRIBUTOR = 'CONTRIBUTOR';

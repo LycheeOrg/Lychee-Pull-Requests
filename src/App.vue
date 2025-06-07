@@ -2,101 +2,30 @@
 	<Panel
 		class="bg-transparent border-none"
 		header="Lychee Pull Requests"
-		:pt:header:class="'justify-center text-3xl font-bold mb-8'"
+		:pt:header:class="'justify-center text-4xl font-bold mb-8'"
 	>
-		<div class="flex flex-col">
-			<div class="flex justify-center text-left">
-				<div v-if="pullRequests" class="flex flex-col gap-2">
-					<div
-						v-for="pr in pullRequests"
-						:key="pr.id"
-						:class="{
-							'flex justify-between gap-16': true,
-							'transition-opacity duration-100 ease-in-out opacity-50 hover:opacity-100':
-								pr.draft,
-						}"
-					>
-						<div class="flex flex-col">
-							<div class="flex items-center gap-2 grow-1">
-								<a
-									:href="pr.html_url"
-									target="_blank"
-									:class="{
-										'font-bold hover:text-sky-400': true,
-										'text-muted-color': pr.draft,
-									}"
-								>
-									{{ pr.title }}
-								</a>
-								<Tag
-									v-for="label in pr.labels"
-									:value="label.name"
-									:key="`${label.id}`"
-									v-tooltip="label.description"
-									:pt:label:class="'text-2xs'"
-									:dt="{
-										padding: '0.15rem 0.5rem',
-									}"
-									:style="{
-										backgroundColor: `#${label.color}`,
-										color: getFrontColor(`#${label.color}`),
-									}"
-								></Tag>
-							</div>
-
-							<div class="text-muted-color text-xs w-full">
-								<span class="text-muted-color-emphasis">#{{ pr.number }}</span>
-								opened by <UserTag :user="pr.user" />
-								<span v-if="pr.base.ref !== 'master'" class="ml-2">
-									&rArr;
-									<span class="ml-2 text-primary-emphasis">{{
-										pr.base.ref
-									}}</span>
-								</span>
-							</div>
-						</div>
+		<div class="flex flex-col max-w-4xl mx-auto gap-4 text-left">
+			<template v-if="pullRequests">
+				<template v-if="pullRequests.length === 1">
+					<PrList v-if="pullRequests" :pull-requests="pullRequests[0].data" />
+				</template>
+				<template v-else>
+					<div v-for="(group, idx) in pullRequests" :key="idx" class="group">
 						<div
-							v-if="pr.review && pr.review.changes_requested"
-							class="text-red-400 font-bold"
-						>
-							Changes requested.
-						</div>
-						<div v-else-if="pr.review && pr.review.approved" class="flex flex-col">
-							<div class="text-green-500 text-right">Approved</div>
-							<div class="text-xs">
-								by
-								<UserTag
-									v-for="(user, idx) in pr.review.by"
-									:user="user"
-									:key="`u${pr.id}-${idx}`"
-								/>
-							</div>
-						</div>
-						<div
-							v-else-if="!pr.draft"
 							:class="{
-								'shrink-1': true,
-								'text-orange-400': !pr.draft && isMoreThanXdays(pr.created_at, 7),
-								'text-red-400': !pr.draft && isMoreThanXdays(pr.created_at, 14),
-								'': pr.draft,
+								'opacity-50 group-hover:opacity-100 transition-opacity duration-100 ease-in-out':
+									allDrafts(group.data),
+								'mb-4 text-xl font-bold text-primary-emphasis border-b border-dashed border-surface-400': true,
 							}"
 						>
-							{{ computeHowLongAgo(pr.created_at) }}
-							<!-- <span v-if="isMoreThanXdays(pr.created_at, 30)">😭</span>
-							<span v-else-if="isMoreThanXdays(pr.created_at, 14)">😢</span>
-							<span v-else-if="isMoreThanXdays(pr.created_at, 7)">🥹</span>
-							<span v-else-if="isMoreThanXdays(pr.created_at, 2)">🙂</span>
-							<span v-else>😄</span> -->
+							{{ group.header }}
 						</div>
-						<div v-else-if="pr.draft" class="text-muted-color">
-							{{ computeHowLongAgo(pr.created_at) }}
-							<!-- <span>🫣</span> -->
-						</div>
+						<PrList :pull-requests="group.data" />
 					</div>
-				</div>
-				<div v-else>
-					<p>Loading...</p>
-				</div>
+				</template>
+			</template>
+			<div v-else>
+				<p class="text-center text-primary-emphasis">Loading...</p>
 			</div>
 		</div>
 	</Panel>
@@ -106,7 +35,6 @@
 import { Octokit } from 'octokit';
 import { ref } from 'vue';
 import { onMounted } from 'vue';
-import Tag from 'primevue/tag';
 import { Panel } from 'primevue';
 import {
 	type PullRequest,
@@ -117,48 +45,24 @@ import {
 	CHANGES_REQUESTED,
 	CONTRIBUTOR,
 } from './ResponsesTypes.ts';
-import UserTag from './components/UserTag.vue';
+import { useSplitter } from './composables/splitter';
+import { computed } from 'vue';
+import PrList from './components/PrList.vue';
 
-const pullRequests = ref<(PullRequest & ReviewStatus)[] | undefined>(undefined);
+const { spliter } = useSplitter();
+const pullRequestsData = ref<(PullRequest & ReviewStatus)[] | undefined>(undefined);
+const pullRequests = computed(() => {
+	if (!pullRequestsData.value) return undefined;
+	return spliter(pullRequestsData.value, prToGroup, prToGroup);
+});
 const octokit = new Octokit();
 
-function colorIsDarkSimple(bgColor: string): boolean {
-	// Simple check for dark color based on luminance
-	const color = bgColor.charAt(0) === '#' ? bgColor.substring(1, 7) : bgColor;
-	const r = parseInt(color.substring(0, 2), 16); // hexToR
-	const g = parseInt(color.substring(2, 4), 16); // hexToG
-	const b = parseInt(color.substring(4, 6), 16); // hexToB
-	return r * 0.299 + g * 0.587 + b * 0.114 <= 186;
-}
-
-function getFrontColor(bgColor: string): string {
-	if (colorIsDarkSimple(bgColor)) {
-		return '#ffffff'; // white for dark backgrounds
+function prToGroup(pr: PullRequest): string {
+	if (!pr.head.ref.includes('/')) {
+		return 'standalone';
 	}
-	return '#000000'; // black for light backgrounds
-}
-
-function computeHowLongAgo(dateString: string): string {
-	const date = new Date(dateString);
-	const now = new Date();
-	const diff = now.getTime() - date.getTime();
-	const seconds = Math.floor(diff / 1000);
-	const minutes = Math.floor(seconds / 60);
-	const hours = Math.floor(minutes / 60);
-	const days = Math.floor(hours / 24);
-
-	if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
-	if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-	if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
-	return `${seconds} second${seconds > 1 ? 's' : ''} ago`;
-}
-
-function isMoreThanXdays(dateString: string, x: number): boolean {
-	const date = new Date(dateString);
-	const now = new Date();
-	const diff = now.getTime() - date.getTime();
-	const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-	return days > x;
+	// select the part before the first dash
+	return pr.head.ref.split('/')[0] || 'standalone';
 }
 
 async function getPrs(): Promise<void> {
@@ -168,7 +72,7 @@ async function getPrs(): Promise<void> {
 			repo: 'Lychee',
 		})
 		.then((response) => {
-			pullRequests.value = response.data as unknown as PullRequest[];
+			pullRequestsData.value = response.data as unknown as PullRequest[];
 		})
 		.catch((error) => {
 			console.error('Error fetching pull requests:', error);
@@ -176,12 +80,12 @@ async function getPrs(): Promise<void> {
 }
 
 async function getStatuses() {
-	if (!pullRequests.value || pullRequests.value.length === 0) {
+	if (!pullRequestsData.value || pullRequestsData.value.length === 0) {
 		console.warn('No pull requests available to fetch statuses for.');
 		return;
 	}
 
-	pullRequests.value.forEach(async (pr, idx) => {
+	pullRequestsData.value.forEach(async (pr, idx) => {
 		await octokit.rest.pulls
 			.listReviews({
 				owner: 'LycheeOrg',
@@ -193,12 +97,14 @@ async function getStatuses() {
 					`Pull request reviews for PR #${pr.number} fetched successfully:`,
 					response.data,
 				);
-				if (!pullRequests.value) {
-					console.warn('pullRequests.value is undefined, cannot update review status.');
+				if (!pullRequestsData.value) {
+					console.warn(
+						'pullRequestsData.value is undefined, cannot update review status.',
+					);
 					return;
 				}
 
-				pullRequests.value[idx].review = extractStatusForPr(
+				pullRequestsData.value[idx].review = extractStatusForPr(
 					response.data as PullRequestReview[],
 				).review;
 			})
@@ -206,6 +112,10 @@ async function getStatuses() {
 				console.error(`Error fetching pull request reviews for PR #${pr.number}:`, error);
 			});
 	});
+}
+
+function allDrafts(prs: PullRequest[]): boolean {
+	return prs.every((pr) => pr.draft);
 }
 
 function extractStatusForPr(reviews: PullRequestReview[]): ReviewStatus {
