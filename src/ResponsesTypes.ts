@@ -7,7 +7,6 @@ export type User = {
 export type PullRequest = {
 	active_lock_reason: unknown;
 	assignee: unknown;
-	assignees: string[];
 	author_association: string;
 	auto_merge: null;
 	body: string;
@@ -28,7 +27,6 @@ export type PullRequest = {
 	node_id: string;
 	number: number;
 	patch_url: string;
-	requested_reviewers: [];
 	review_comment_url: string;
 	review_comments_url: string;
 	state: 'open';

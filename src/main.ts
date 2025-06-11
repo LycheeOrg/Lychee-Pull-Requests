@@ -7,6 +7,8 @@ import Aura from '@primeuix/themes/aura';
 import Tooltip from 'primevue/tooltip';
 import ToastService from 'primevue/toastservice';
 
+import piniaPluginPersistedState from 'pinia-plugin-persistedstate';
+
 import App from './App.vue';
 import { definePreset } from '@primeuix/themes';
 import type { Preset } from '@primeuix/themes/types';
@@ -33,7 +35,9 @@ const preset: Preset = {
 
 const MySuperSarvinPreset = definePreset(Aura, preset);
 
-app.use(createPinia());
+const pinia = createPinia();
+pinia.use(piniaPluginPersistedState);
+app.use(pinia);
 app.use(PrimeVue, {
 	theme: {
 		preset: MySuperSarvinPreset,
