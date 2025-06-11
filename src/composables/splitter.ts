@@ -36,11 +36,7 @@ export function useSplitter() {
 		return ret;
 	}
 
-	function verifyOrder(
-		is_debug: boolean,
-		data: { id: string }[],
-		splitData: SplitData<{ id: string }>[],
-	) {
+	function verifyOrder(is_debug: boolean, data: { id: string }[], splitData: SplitData<{ id: string }>[]) {
 		if (!is_debug) {
 			return;
 		}
@@ -60,18 +56,14 @@ export function useSplitter() {
 				}
 				const candidate = chunk.iter + idx;
 				if (expected !== candidate) {
-					console.error(
-						`Data mismatch for id ${d.id} (expected ${expected}, got ${candidate})`,
-					);
+					console.error(`Data mismatch for id ${d.id} (expected ${expected}, got ${candidate})`);
 					check = true;
 				}
 			});
 		});
 
 		if (check) {
-			alert(
-				'Data mismatch found in splitter, please check the console logs and contact the developer.',
-			);
+			alert('Data mismatch found in splitter, please check the console logs and contact the developer.');
 		}
 	}
 

@@ -39,7 +39,7 @@ export type PullRequest = {
 	head: { ref: string };
 };
 
-export const CONTRIBUTOR = 'CONTRIBUTOR';
+export const CONTRIBUTORS = ['JasonMillward', 'ppshobi', 'ildyria', 'RonnieTaz', 'sancsin', 'd7415'];
 export const APPROVED = 'APPROVED';
 export const CHANGES_REQUESTED = 'CHANGES_REQUESTED';
 export type PullRequestReview = {
@@ -59,6 +59,7 @@ export type ReviewStatus = {
 	review?: {
 		approved: boolean;
 		changes_requested: boolean;
+		code_owner_approved: boolean;
 		by: User[];
 	};
 };

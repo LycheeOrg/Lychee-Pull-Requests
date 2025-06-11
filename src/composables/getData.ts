@@ -1,7 +1,7 @@
 import {
 	APPROVED,
 	CHANGES_REQUESTED,
-	CONTRIBUTOR,
+	CONTRIBUTORS,
 	type PullRequest,
 	type PullRequestReview,
 	type ReviewStatus,
@@ -54,10 +54,7 @@ export function useGetData(
 		// Ignore all the reviews that are not from the contributors.
 		const statuses = reviews.reduce(
 			(acc, review) => {
-				if (
-					(review.state === APPROVED || review.state === CHANGES_REQUESTED) &&
-					review.author_association === CONTRIBUTOR
-				) {
+				if (review.state === APPROVED || review.state === CHANGES_REQUESTED) {
 					acc[review.user.login] = { status: review.state, user: review.user };
 				}
 				return acc;
@@ -69,14 +66,18 @@ export function useGetData(
 			review: {
 				approved: false,
 				changes_requested: false,
+				code_owner_approved: false,
 				by: [],
 			},
 		};
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		Object.entries(statuses).forEach(([_, review]) => {
-			if (review.status === APPROVED) {
+			if (review.status === APPROVED && CONTRIBUTORS.includes(review.user.login)) {
 				result.review!.approved = true;
-			} else if (status === CHANGES_REQUESTED) {
+				result.review!.code_owner_approved = true;
+			} else if (review.status === APPROVED) {
+				result.review!.approved = true;
+			} else if (review.status === CHANGES_REQUESTED) {
 				result.review!.changes_requested = true;
 			}
 			result.review!.by.push(review.user);

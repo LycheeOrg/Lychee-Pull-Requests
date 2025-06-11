@@ -1,5 +1,5 @@
 <template>
-	<a :href="props.user.html_url" class="text-muted-color-emphasis">
+	<a :href="props.user.html_url" class="text-muted-color-emphasis ml-2">
 		<img :src="props.user.avatar_url" class="rounded-full h-4 inline" /> {{ props.user.login }}
 	</a>
 </template>

@@ -5,8 +5,7 @@
 			:key="pr.id"
 			:class="{
 				'flex justify-between gap-16': true,
-				'transition-opacity duration-100 ease-in-out opacity-50 hover:opacity-100':
-					pr.draft,
+				'transition-opacity duration-100 ease-in-out opacity-50 hover:opacity-100': pr.draft,
 			}"
 		>
 			<div class="flex flex-col">
@@ -46,18 +45,19 @@
 					</span>
 				</div>
 			</div>
-			<div v-if="pr.review && pr.review.changes_requested" class="text-red-400 font-bold">
-				Changes requested.
-			</div>
+			<div v-if="pr.review && pr.review.changes_requested" class="text-red-400 font-bold">Changes requested.</div>
 			<div v-else-if="pr.review && pr.review.approved" class="flex flex-col">
-				<div class="text-green-500 text-right">Approved</div>
+				<div
+					:class="{
+						'text-right': true,
+						'text-green-500': pr.review.approved && pr.review.code_owner_approved,
+					}"
+				>
+					Approved
+				</div>
 				<div class="text-xs">
 					by
-					<UserTag
-						v-for="(user, idx) in pr.review.by"
-						:user="user"
-						:key="`u${pr.id}-${idx}`"
-					/>
+					<UserTag v-for="(user, idx) in pr.review.by" :user="user" :key="`u${pr.id}-${idx}`" />
 				</div>
 			</div>
 			<div

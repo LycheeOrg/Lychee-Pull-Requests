@@ -3,10 +3,7 @@ import type { QueryStore } from '@/stores/queryStore';
 import { type Octokit } from 'octokit';
 
 export function useOctokitWrapper(octokit: Octokit, store: QueryStore) {
-	async function fetchPullRequests(
-		owner: string,
-		repo: string,
-	): Promise<PullRequest[] | undefined> {
+	async function fetchPullRequests(owner: string, repo: string): Promise<PullRequest[] | undefined> {
 		const group = {
 			owner: owner,
 			repo: repo,
