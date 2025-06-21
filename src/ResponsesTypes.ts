@@ -39,7 +39,6 @@ export type PullRequest = {
 	head: { ref: string };
 };
 
-export const CONTRIBUTORS = ['JasonMillward', 'ppshobi', 'ildyria', 'RonnieTaz', 'sancsin', 'd7415'];
 export const APPROVED = 'APPROVED';
 export const CHANGES_REQUESTED = 'CHANGES_REQUESTED';
 export type PullRequestReview = {

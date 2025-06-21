@@ -1,7 +1,7 @@
 <template>
 	<Panel
 		class="bg-transparent border-none"
-		header="Lychee Pull Requests"
+		:header="formatOwnerRepo() + ' Pull Requests'"
 		:pt:header:class="'justify-center text-4xl font-bold'"
 	>
 		<div class="flex flex-col max-w-4xl mx-auto gap-4 text-left">
@@ -9,7 +9,35 @@
 				<span class="group-hover:hidden">Last update: {{ formattedUpdated }}</span>
 				<span class="hidden group-hover:inline text-primary-emphasis">Click to clear cache.</span>
 			</div>
+			<div class="flex flex-col gap-4 -mt-12">
+				<i
+					class="self-end flex pi pi-question-circle text-xl text-muted-color hover:text-primary-emphasis peer cursor-help"
+				></i>
+				<div
+					class="text-muted-color flex flex-col gap-4 max-h-0 overflow-y-hidden peer-hover:max-h-dvh hover:max-h-dvh transition-all duration-1000 ease-in-out"
+				>
+					<p>
+						The support of stacked PR on the GitHub pull request page is pretty much non-existent. This page
+						attempts to provide a better way to visualize them.
+					</p>
+					<p>
+						A stack is automatically recognized by following the branch naming-convention
+						<span class="text-sm font-mono text-muted-color-emphasis">feature-name/pr-name</span>: all the
+						pull requests that start with the same
+						<span class="text-sm font-mono text-muted-color-emphasis">feature-name/</span> are part of the
+						same stack. All other pull requests are considered standalone.
+					</p>
+					<p>
+						You can also use this page for your projects by adding
+						<span class="text-sm font-mono text-muted-color-emphasis">#&lt;owner&gt;/&lt;repo&gt;</span> at
+						the end of the url.
+					</p>
+				</div>
+			</div>
 			<template v-if="pullRequests">
+				<template v-if="pullRequests.length === 0">
+					<p class="text-center text-muted-color">No active pull requests.</p>
+				</template>
 				<template v-if="pullRequests.length === 1">
 					<PrList v-if="pullRequests" :pull-requests="pullRequests[0].data" />
 				</template>
@@ -88,15 +116,33 @@ const formattedUpdated = computed(() => {
 	);
 });
 
+function getOwnerRepo(): { owner: string; repo: string } {
+	const search = window.location.hash;
+	const [owner, repo] = search.replace('#', '').split('/');
+	return {
+		owner: owner || 'LycheeOrg',
+		repo: repo || 'Lychee',
+	};
+}
+
+const { owner, repo } = getOwnerRepo();
+
+function formatOwnerRepo(): string {
+	if (owner === 'LycheeOrg' && repo === 'Lychee') {
+		return 'Lychee';
+	}
+	return `${owner}/${repo}`;
+}
+
 async function refresh() {
 	queryStore.reset();
 	pullRequestsData.value = undefined;
-	await getPrs();
-	getStatuses();
+	await getPrs(owner, repo);
+	getStatuses(owner, repo);
 }
 
 onMounted(async () => {
-	await getPrs();
-	getStatuses();
+	await getPrs(owner, repo);
+	getStatuses(owner, repo);
 });
 </script>

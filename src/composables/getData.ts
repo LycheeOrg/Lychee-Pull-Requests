@@ -1,13 +1,15 @@
 import {
 	APPROVED,
 	CHANGES_REQUESTED,
-	CONTRIBUTORS,
 	type PullRequest,
 	type PullRequestReview,
 	type ReviewStatus,
 	type User,
 } from '@/ResponsesTypes';
 import { ref } from 'vue';
+import { useOwnerRepo } from './getOwnerRepo';
+
+const { getReviewers } = useOwnerRepo();
 
 export function useGetData(
 	fetchPullRequests: (owner: string, repo: string) => Promise<PullRequest[] | undefined>,
@@ -19,20 +21,20 @@ export function useGetData(
 ) {
 	const pullRequestsData = ref<(PullRequest & ReviewStatus)[] | undefined>(undefined);
 
-	async function getPrs(): Promise<void> {
-		return fetchPullRequests('LycheeOrg', 'Lychee').then((data) => {
+	async function getPrs(owner: string, repo: string): Promise<void> {
+		return fetchPullRequests(owner, repo).then((data) => {
 			pullRequestsData.value = data;
 		});
 	}
 
-	async function getStatuses() {
+	async function getStatuses(owner: string, repo: string): Promise<void> {
 		if (!pullRequestsData.value || pullRequestsData.value.length === 0) {
 			console.warn('No pull requests available to fetch statuses for.');
 			return;
 		}
 
 		pullRequestsData.value.forEach(async (pr, idx) => {
-			await fetchPullRequestReviews('LycheeOrg', 'Lychee', pr.number)
+			await fetchPullRequestReviews(owner, repo, pr.number)
 				.then((data) => {
 					if (!pullRequestsData.value) {
 						console.warn('pullRequestsData.value is undefined, cannot update review status.');
@@ -70,9 +72,15 @@ export function useGetData(
 				by: [],
 			},
 		};
+
+		const constributors = getReviewers();
+
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		Object.entries(statuses).forEach(([_, review]) => {
-			if (review.status === APPROVED && CONTRIBUTORS.includes(review.user.login)) {
+			if (
+				review.status === APPROVED &&
+				(constributors.length === 0 || constributors.includes(review.user.login))
+			) {
 				result.review!.approved = true;
 				result.review!.code_owner_approved = true;
 			} else if (review.status === APPROVED) {
