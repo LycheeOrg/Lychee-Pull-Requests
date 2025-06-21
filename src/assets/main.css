@@ -83,9 +83,6 @@ body.dark {
 	text-decoration: none;
 	text-indent: -999999px;
 }
-.github-fork-ribbon.fixed {
-	position: fixed;
-}
 .github-fork-ribbon:active,
 .github-fork-ribbon:hover {
 	background-color: rgba(0, 0, 0, 0);
@@ -141,15 +138,5 @@ body.dark {
 	border-style: dotted;
 	border-color: #fff;
 	border-color: rgba(255, 255, 255, 0.7);
-}
-.github-fork-ribbon.left-top:after,
-.github-fork-ribbon.left-top:before,
-.github-fork-ribbon.right-bottom:after,
-.github-fork-ribbon.right-bottom:before {
-	-webkit-transform: rotate(-45deg);
-	-moz-transform: rotate(-45deg);
-	-ms-transform: rotate(-45deg);
-	-o-transform: rotate(-45deg);
-	transform: rotate(-45deg);
 }
 /*# sourceMappingURL=gh-fork-ribbon.min.css.map */
