@@ -5,16 +5,17 @@
 		:pt:header:class="'justify-center text-4xl font-bold'"
 	>
 		<div class="flex flex-col max-w-4xl mx-auto gap-4 text-left">
-			<div class="group mb-4 text-muted-color text-center cursor-pointer" @click="refresh">
-				<span class="group-hover:hidden">Last update: {{ formattedUpdated }}</span>
-				<span class="hidden group-hover:inline text-primary-emphasis">Click to clear cache.</span>
-			</div>
-			<div class="flex flex-col gap-4 -mt-12">
+			<div class="flex justify-between flex-wrap gap-4">
+				<div></div>
+				<div class="group text-muted-color text-center cursor-pointer w-4/5" @click="refresh">
+					<span class="group-hover:hidden">Last update: {{ formattedUpdated }}</span>
+					<span class="hidden group-hover:inline text-primary-emphasis">Click to clear cache.</span>
+				</div>
 				<i
 					class="self-end flex pi pi-question-circle text-xl text-muted-color hover:text-primary-emphasis peer cursor-help"
 				></i>
 				<div
-					class="text-muted-color flex flex-col gap-4 max-h-0 overflow-y-hidden peer-hover:max-h-dvh hover:max-h-dvh transition-all duration-1000 ease-in-out"
+					class="w-full text-muted-color flex flex-col gap-4 max-h-0 overflow-y-hidden peer-hover:max-h-dvh hover:max-h-dvh transition-all duration-1000 ease-in-out"
 				>
 					<p>
 						The support of stacked PR on the GitHub pull request page is pretty much non-existent. This page
@@ -29,8 +30,8 @@
 					</p>
 					<p>
 						You can also use this page for your projects by adding
-						<span class="text-sm font-mono text-muted-color-emphasis">#&lt;owner&gt;/&lt;repo&gt;</span> at
-						the end of the url.
+						<span class="text-sm font-mono text-muted-color-emphasis">#&lt;owner&gt;/&lt;repo&gt;</span>
+						at the end of the url.
 					</p>
 				</div>
 			</div>
